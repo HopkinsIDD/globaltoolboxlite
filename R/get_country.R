@@ -458,6 +458,7 @@ get_city_std <- function(location){
 #' @return vector of country names matching each ISO. These can then be used to identify other characteristics of the country
 #' @export
 get_country_name_ISO3 <- function(ISO){
+    data('country_codes', package = 'globaltoolboxlite')
     return(as.character(
         country_codes$Country[match(toupper(ISO), country_codes$ISO3)]
     ))
@@ -472,6 +473,7 @@ get_country_name_ISO3 <- function(ISO){
 #' @return vector of country names matching ISO2. These can then be used to identify other characteristics of the country
 #' @export
 get_country_name_ISO2 <- function(ISO2){
+  data('country_codes', package = 'globaltoolboxlite')
   return(as.character(
     country_codes$Country[match(toupper(ISO2), country_codes$ISO2)]
   ))
@@ -487,6 +489,7 @@ get_country_name_ISO2 <- function(ISO2){
 #' @return vector of ISO3s matching each ISO2 These can then be used to identify other characteristics of the country
 #' @export
 get_iso3_from_ISO2 <- function(ISO2){
+  data('country_codes', package = 'globaltoolboxlite')
   return(as.character(
     country_codes$ISO3[match(toupper(ISO2), country_codes$ISO2)]
   ))
@@ -502,6 +505,7 @@ get_iso3_from_ISO2 <- function(ISO2){
 #' @return vector of ISO2s matching each ISO3.
 #' @export
 get_iso2_from_ISO3 <- function(ISO3){
+  data('country_codes', package = 'globaltoolboxlite')
   return(as.character(
     country_codes$ISO2[match(toupper(ISO3), country_codes$ISO3)]
   ))
@@ -518,6 +522,7 @@ get_iso2_from_ISO3 <- function(ISO3){
 #' @export
 get_UNcode <- function(country){
   iso <- get_iso(country)
+  data('country_codes', package = 'globaltoolboxlite')
   return(
     country_codes$UNcode[match(toupper(iso), country_codes$ISO3)]
   )
@@ -533,6 +538,7 @@ get_UNcode <- function(country){
 #' @return vector of UN codes matching each ISO3
 #' @export
 get_UNcode_from_ISO3 <- function(ISO3){
+  data('country_codes', package = 'globaltoolboxlite')
   return(
     country_codes$UNcode[match(toupper(ISO3), country_codes$ISO3)]
   )
@@ -578,6 +584,8 @@ get_country_code <- function(
   )
 ){
   iso3 <- get_iso(country)
+  data('country_codes', package = 'globaltoolboxlite')
+  
   # Get code using ISO3
   code_columns <- match(toupper(code), toupper(colnames(country_codes)))
   return(as.character(

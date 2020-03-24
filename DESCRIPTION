@@ -18,12 +18,9 @@ Imports:
     tidyr,
     reshape2,
     stats,  
-    sf,  
-    sp,  
     rlang  
 Suggests: 
     readxl,
-    rgdal,
     testthat,
     covr,
     httr
