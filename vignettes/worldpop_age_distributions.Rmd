@@ -19,7 +19,8 @@ library(globaltoolboxlite)
 
 
 ```{r}
-
+library(tidyverse)
+library(globaltoolboxlite)
 filenames <- download_worldpop_agetifs(country="BGD", year="2020", save_dir="raw_data", cores=4)
 
 age_pop_data <- load_worldpop_age(shp="raw_data/BGD/bgd_admbnda_adm2_bbs_20180410/bgd_admbnda_adm2_bbs_20180410.shp", 
