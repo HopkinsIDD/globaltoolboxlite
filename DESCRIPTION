@@ -23,7 +23,13 @@ Suggests:
     readxl,
     testthat,
     covr,
-    httr
+    httr,
+    exactextractr,
+    RCurl,
+    raster,
+    sf,
+    doParallel,
+    foreach
 License: GPL (>=2)
 Encoding: UTF-8
 LazyData: true
@@ -33,3 +39,5 @@ Collate:
     'get_country.R'
     'get_region.R'
     'get_who_disease_incidence.R'
+    'worldpop_data.R'
+    

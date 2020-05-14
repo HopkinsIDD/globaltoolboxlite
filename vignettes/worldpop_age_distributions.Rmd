@@ -1,0 +1,32 @@
+---
+title: "WorldPop Data"
+output: html_notebook
+---
+
+This is a tutorial of the functionality in `globaltoolboxlite` to work with data from [WorldPop](https://www.worldpop.org/).
+
+
+
+# Population age distributions, subnational
+
+To use worldpop geotiffs to produce population age distributions.
+Users need to provide their own shapefiles. All files from worldpop are downloaded with the functions below.
+
+```{r}
+library(tidyverse)
+library(globaltoolboxlite)
+```
+
+
+```{r}
+
+filenames <- download_worldpop_agetifs(country="BGD", year="2020", save_dir="raw_data", cores=4)
+
+age_pop_data <- load_worldpop_age(shp="raw_data/BGD/bgd_admbnda_adm2_bbs_20180410/bgd_admbnda_adm2_bbs_20180410.shp", 
+                                  country="BGD", year="2020", save_dir="raw_data", cores=4)
+
+age_pop_10yr <- convert_wp_10yr(age_pop_data)
+```
+
+
+
