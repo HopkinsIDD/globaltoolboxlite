@@ -149,9 +149,15 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
                                               loc_values <- adm2 %>% 
                                                   dplyr::mutate(sum = exactextractr::exact_extract(pop, adm2, 'sum')) %>%
                                                   tibble::as_tibble() %>% 
-                                                  dplyr::select(ADM2_EN, sum) %>%
+                                                  #dplyr::select(ADM2_EN, sum) %>%
                                                   dplyr::mutate(sex = male_female,
-                                                                age = age_grps_full_)
+                                                                age = age_grps_full_) %>%
+                                                  dplyr::rename(pop = sum) %>% 
+                                                  dplyr::select(-geometry)
+                                              
+                                              if (!is.na(loc_var)) {
+                                                  loc_values <- loc_values %>% dplyr::select(all_of(loc_var), sex, age, pop)
+                                              }
                                               
                                               loc_values <- loc_values %>%
                                                   tidyr::separate(age, into=c("age_l","age_r"), sep="_", remove=FALSE) %>%
@@ -165,7 +171,6 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
     
     age_pop_data <- age_pop_data %>% 
         tibble::as_tibble() %>%
-        dplyr::rename(adm2 = ADM2_EN, pop = sum) %>% 
         tidyr::pivot_wider(names_from="sex", values_from = pop) %>%
         dplyr::rename(pop_m = m, pop_f = f) %>%
         dplyr::mutate(pop = pop_m + pop_f)
