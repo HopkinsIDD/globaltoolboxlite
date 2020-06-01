@@ -52,6 +52,34 @@ load_worldpop <- function(wp_file, shp) {
 
 
 
+##' Function to get population data from a worldpop geotiff and geounit shapefile
+##' This function extracts raster values for overlayed polygons
+##' 
+##' @param shp Shapefile file path for shapefile of geunits (i.e., admin2)
+##' @param country ISO3 of country of interest
+##' @param year Year of population data (2000 to 2020)
+##'
+##' @return vector of filenames of the WorldPop age geotiffs
+##'
+##' @import dplyr doParallel foreach
+##' @importFrom RCurl getURL
+##' 
+##' @references WorldPop (https://www.worldpop.org/geodata)
+##'
+##' @export
+##' 
+wp_geotiff_filenames <- function(shp, country="BGD", year="2020") {
+        
+        url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country, "/")
+        filenames = RCurl::getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE)
+        filenames <- unlist(strsplit(filenames, "\\n"))
+        
+        filenames <- gsub("\\r", "", filenames) # for some users there will also be "\r"
+        
+        return(filenams)
+}
+
+
 
 
 ##' Function to get population data from a worldpop geotiff and geounit shapefile
@@ -77,8 +105,8 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
     dir.create(file.path(save_dir, country), recursive = TRUE, showWarnings = FALSE)
     
     url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country, "/")
-    filenames = RCurl::getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE)
-    filenames <- unlist(strsplit(filenames, "\\r\\n"))
+    filenames <- wp_geotiff_filenames(shp, country, year)
+        
     
     doParallel::registerDoParallel(cores)
     foreach(f=seq_len(length(filenames))) %dopar% {
@@ -123,9 +151,7 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
 ##' 
 load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_data", cores=4, loc_var=NA) {
     
-    url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country, "/")
-    filenames = RCurl::getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE)
-    filenames <- unlist(strsplit(filenames, "\\r\\n"))
+    filenames <- wp_geotiff_filenames(shp, country, year)
     
     age_grps <- sort(unique(as.integer(data.frame(matrix(unlist(strsplit(filenames, "_")), ncol=4, byrow=TRUE), stringsAsFactors = FALSE)[,3])))
     age_grps_full <- paste(age_grps, c(age_grps[-1],100), sep="_")
