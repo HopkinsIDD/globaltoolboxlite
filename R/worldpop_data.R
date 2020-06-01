@@ -76,7 +76,7 @@ wp_geotiff_filenames <- function(shp, country="BGD", year="2020") {
         
         filenames <- gsub("\\r", "", filenames) # for some users there will also be "\r"
         
-        return(filenams)
+        return(filenames)
 }
 
 
