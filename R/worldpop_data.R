@@ -125,7 +125,6 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
 
 
 
-
 ##' Function to get population data from a worldpop geotiff and geounit shapefile
 ##' This function extracts raster values for overlayed polygons
 ##' 
@@ -135,6 +134,7 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
 ##' @param save_dir directory where to save geotiff files
 ##' @param cores number of cores to parallelize over
 ##' @param loc_var name of location name or id variable, if want to reduce data to this and population data
+##' @param add_pop_to_shapefile logical, whether to add total population to the shapefile
 ##'
 ##' @return long age population data by admin level 2
 ##'
@@ -149,7 +149,8 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
 ##'
 ##' @export
 ##' 
-load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_data", cores=4, loc_var=NA) {
+load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_data", cores=4, loc_var=NA,
+                              add_pop_to_shapefile = TRUE) {
     
     filenames <- wp_geotiff_filenames(shp, country, year)
     
@@ -183,7 +184,7 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
                                                   dplyr::select(-geometry)
                                               
                                               if (!is.na(loc_var)) {
-                                                  loc_values <- loc_values %>% dplyr::select(all_of(loc_var), sex, age, pop)
+                                                  loc_values <- loc_values %>% dplyr::select(tidyselect::all_of(loc_var), sex, age, pop)
                                               }
                                               
                                               loc_values <- loc_values %>%
@@ -195,17 +196,41 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
                                           }
     doParallel::stopImplicitCluster()    
     
-    
     age_pop_data <- age_pop_data %>% 
         tibble::as_tibble() %>%
+        dplyr::mutate(loc = get(loc_var)) %>%
+        dplyr::group_by(sex) %>%
+        dplyr::mutate(row = row_number()) %>%
         tidyr::pivot_wider(names_from="sex", values_from = pop) %>%
         dplyr::rename(pop_m = m, pop_f = f) %>%
-        dplyr::mutate(pop = pop_m + pop_f)
+        dplyr::mutate(pop_m = as.integer(pop_m), pop_f = as.integer(pop_f)) %>%
+        dplyr::mutate(pop = pop_m + pop_f) %>%
+        dplyr::select(-row)
+    
+    # age_pop_wide <- age_pop_data %>%
+    #   dplyr::select(loc, age, pop) %>%
+    #   dplyr::group_by(age) %>%
+    #   dplyr::mutate(row = row_number()) %>%
+    #   tidyr::pivot_wider(names_from="age", values_from = pop) %>%
+    #   dplyr::select(-row)
+    
+    age_pop_tot <- age_pop_data %>%
+        dplyr::group_by(loc) %>%
+        dplyr::summarise(pop = sum(pop)) %>%
+        tibble::as_tibble() %>%
+        dplyr::rename(setNames("loc", loc_var))
+    
+    # Add data to shapefile if desired
+    if (add_pop_to_shapefile){
+        
+        adm2 <- adm2 %>% left_join(age_pop_tot, 
+                                   by=c(loc_var))
+        # Save it back in the same name
+        sf::st_write(adm2, shp, delete_layer=TRUE)
+    }
     
     return(age_pop_data)
-    
 }
-
 
 
 
