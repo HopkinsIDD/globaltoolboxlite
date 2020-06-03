@@ -182,7 +182,7 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
                                               }
                                               
                                               loc_values <- adm2 %>% 
-                                                  dplyr::mutate(sum = tidyselect::all_of(all_otmp_sum)) %>%
+                                                  dplyr::mutate(sum = tidyselect::all_of(tmp_sum)) %>%
                                                   tibble::as_tibble() %>% 
                                                   dplyr::mutate(sex = male_female,
                                                                 age = age_grps_full_) %>%
