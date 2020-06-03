@@ -174,10 +174,16 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
                                               age_grps_full_ <- age_grps_full[which(age_grp_==age_grps)]
                                               
                                               #extract raster values by summing across 100m grids within shapefile polygons
+                                              tmp_sum <- exactextractr::exact_extract(pop, adm2, 'sum')
+                                              
+                                              if ("pop" %in% colnames(adm2)){
+                                                  adm2 <- adm2 %>%
+                                                      dplyr::select(-pop)
+                                              }
+                                              
                                               loc_values <- adm2 %>% 
-                                                  dplyr::mutate(sum = exactextractr::exact_extract(pop, adm2, 'sum')) %>%
+                                                  dplyr::mutate(sum = tidyselect::all_of(all_otmp_sum)) %>%
                                                   tibble::as_tibble() %>% 
-                                                  #dplyr::select(ADM2_EN, sum) %>%
                                                   dplyr::mutate(sex = male_female,
                                                                 age = age_grps_full_) %>%
                                                   dplyr::rename(pop = sum) %>% 
