@@ -218,14 +218,7 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
         dplyr::mutate(pop_m = as.integer(pop_m), pop_f = as.integer(pop_f)) %>%
         dplyr::mutate(pop = pop_m + pop_f) %>%
         dplyr::select(-row)
-    
-    # age_pop_wide <- age_pop_data %>%
-    #   dplyr::select(loc, age, pop) %>%
-    #   dplyr::group_by(age) %>%
-    #   dplyr::mutate(row = row_number()) %>%
-    #   tidyr::pivot_wider(names_from="age", values_from = pop) %>%
-    #   dplyr::select(-row)
-    
+
     age_pop_tot <- age_pop_data %>%
         dplyr::group_by(loc) %>%
         dplyr::summarise(pop = sum(pop)) %>%
@@ -235,10 +228,16 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
     # Add data to shapefile if desired
     if (add_pop_to_shapefile){
         
-        adm2 <- adm2 %>% left_join(age_pop_tot, 
-                                   by=c(loc_var))
-        # Save it back in the same name
-        sf::st_write(adm2, shp, delete_layer=TRUE)
+        if (!is.null(shp_country_var)){
+            print("Not adding population to shapefile due to subsetting of shapefile")
+        } else {
+        
+            adm2 <- adm2 %>% left_join(age_pop_tot, 
+                                       by=c(loc_var))
+            
+            # Save it back in the same name
+            sf::st_write(adm2, shp, delete_layer=TRUE)
+        }
     }
     
     return(age_pop_data)
