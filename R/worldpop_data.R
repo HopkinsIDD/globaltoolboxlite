@@ -55,7 +55,6 @@ load_worldpop <- function(wp_file, shp) {
 ##' Function to get population data from a worldpop geotiff and geounit shapefile
 ##' This function extracts raster values for overlayed polygons
 ##' 
-##' @param shp Shapefile file path for shapefile of geunits (i.e., admin2)
 ##' @param country ISO3 of country of interest
 ##' @param year Year of population data (2000 to 2020)
 ##'
@@ -68,7 +67,7 @@ load_worldpop <- function(wp_file, shp) {
 ##'
 ##' @export
 ##' 
-wp_geotiff_filenames <- function(shp, country="BGD", year="2020") {
+wp_geotiff_filenames <- function(country="BGD", year="2020") {
         
         url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country, "/")
         filenames = RCurl::getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE)
@@ -105,7 +104,7 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
     dir.create(file.path(save_dir, country), recursive = TRUE, showWarnings = FALSE)
     
     url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country, "/")
-    filenames <- wp_geotiff_filenames(shp, country, year)
+    filenames <- wp_geotiff_filenames(country, year)
         
     
     doParallel::registerDoParallel(cores)
@@ -125,16 +124,18 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
 
 
 
+
 ##' Function to get population data from a worldpop geotiff and geounit shapefile
 ##' This function extracts raster values for overlayed polygons
 ##' 
-##' @param shp Shapefile file path for shapefile of geunits (i.e., admin2)
+##' @param shp Shapefile file path for shapefile of geounits (i.e., admin2)
 ##' @param country ISO3 of country of interest
 ##' @param year Year of population data (2000 to 2020)
 ##' @param save_dir directory where to save geotiff files
 ##' @param cores number of cores to parallelize over
 ##' @param loc_var name of location name or id variable, if want to reduce data to this and population data
 ##' @param add_pop_to_shapefile logical, whether to add total population to the shapefile
+##' @param shp_country_var Variable in the shapefile denoting the country ISO3 code. For GADM shapefiles, this is GID_0. If NULL, no subsetting done
 ##'
 ##' @return long age population data by admin level 2
 ##'
@@ -150,17 +151,22 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
 ##' @export
 ##' 
 load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_data", cores=4, loc_var=NA,
-                              add_pop_to_shapefile = TRUE) {
+                              add_pop_to_shapefile = TRUE, shp_country_var=NULL) {
     
-    filenames <- wp_geotiff_filenames(shp, country, year)
+    filenames <- wp_geotiff_filenames(country, year)
     
     age_grps <- sort(unique(as.integer(data.frame(matrix(unlist(strsplit(filenames, "_")), ncol=4, byrow=TRUE), stringsAsFactors = FALSE)[,3])))
     age_grps_full <- paste(age_grps, c(age_grps[-1],100), sep="_")
     
     
     #load data
-    adm2 <- sf::read_sf(shp)  #district level shapefile
-    
+    if (!is.null(shp_country_var)){
+        adm2 <- sf::read_sf(shp) %>%   #admin-2 / district level shapefile
+            dplyr::filter(!!as.name(shp_country_var)==country)
+    } else {
+        adm2 <- sf::read_sf(shp) 
+    }
+        
     doParallel::registerDoParallel(cores)
     age_pop_data <- foreach(f=seq_len(length(filenames)), .combine=rbind,
                             .packages = c("dplyr", "tibble", 
@@ -237,6 +243,9 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
     
     return(age_pop_data)
 }
+
+
+
 
 
 
