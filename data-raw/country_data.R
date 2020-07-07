@@ -3,17 +3,6 @@
 
 
 
-# Install and load needed packages
-if(!require('dplyr')) install.packages('dplyr'); library(dplyr)
-if(!require('readr')) install.packages('readr'); library(readr)
-# if(!require('RCurl')) install.packages('RCurl'); library(RCurl)
-# if(!require('tibble')) install.packages('tibble'); library(tibble)
-if(!require('curl')) install.packages('curl'); library(curl)
-if(!require('ISOcodes')) install.packages('ISOcodes'); library(ISOcodes)
-
-
-
-
 #####################################################
 # Import and Clean the Data
 
@@ -77,10 +66,10 @@ write.csv(alt_country_names, 'data-raw/alt_country_names.csv', row.names = FALSE
 # Build Country Reference Dataset  ---------------------------------------------
 #  - this will be linked to using country codes
 
-country_df <- ISOcodes_level1 %>% mutate(ISO_level=1, Type="Country") %>% 
-                  select(ISO3=Alpha_3, ISO2=Alpha_2, Numeric, ISO_level, everything()) %>% as.data.frame()
+country_df <- ISOcodes_level1 %>% dplyr::mutate(ISO_level=1, Type="Country") %>% 
+  dplyr::select(ISO3=Alpha_3, ISO2=Alpha_2, Numeric, ISO_level, tidyselect::everything()) %>% as.data.frame()
 country_df$Name[!is.na(country_df$Common_name)] <- country_df$Common_name[!is.na(country_df$Common_name)] # replace name with common name if available
-country_df <- country_df %>% select(-Common_name)
+country_df <- country_df %>% dplyr::select(-Common_name)
 
 # Save for the package
 usethis::use_data(country_df, overwrite = TRUE, compress = 'xz')
@@ -91,10 +80,10 @@ usethis::use_data(country_df, overwrite = TRUE, compress = 'xz')
 # Sub-Country Locations ---------------------------------------------------
 # -- Includes England, Wales, etc.
 
-ISOcodes_level2 <- ISOcodes_level2 %>% mutate(ISO2=substr(Code,1,2)) %>% select(ISO2, everything())
+ISOcodes_level2 <- ISOcodes_level2 %>% dplyr::mutate(ISO2=substr(Code,1,2)) %>% dplyr::select(ISO2, tidyselect::everything())
 ISOcodes_level2$ISO3 <- country_df$ISO3[match(ISOcodes_level2$ISO2,country_df$ISO2)]  
 ISOcodes_level2$Parent <- country_df$Name[match(ISOcodes_level2$ISO2,country_df$ISO2)]  
-ISOcodes_level2 <- ISOcodes_level2 %>% mutate(ISO_level=2) %>% select(ISO3, ISO2, everything())
+ISOcodes_level2 <- ISOcodes_level2 %>% dplyr::mutate(ISO_level=2) %>% dplyr::select(ISO3, ISO2, tidyselect::everything())
 ISOcodes_level2$Name[ISOcodes_level2$Code=="AE-AZ"] <- "Abu Dhabi"
 ISOcodes_level2$Name[ISOcodes_level2$Code=="AE-AJ"] <- "Ajman"
 ISOcodes_level2$Name[ISOcodes_level2$Code=="AE-DU"] <- "Dubai"
@@ -113,12 +102,12 @@ usethis::use_data(locations_lvl2, overwrite = TRUE, compress = 'xz')
 # Check for missing ISOs
 sum(is.na(country_data$ISO3166.1.Alpha.3))
 
-country_data <- country_data %>% select(ISO3=ISO3166.1.Alpha.3,
+country_data <- country_data %>% dplyr::select(ISO3=ISO3166.1.Alpha.3,
                                     ISO2=ISO3166.1.Alpha.2,
                                     Country=official_name_en,
                                     Country2=CLDR.display.name,
-                                    UNcode=ISO3166.1.numeric, everything()) %>%
-                                  filter(!is.na(ISO3))
+                                    UNcode=ISO3166.1.numeric, tidyselect::everything()) %>%
+                                  dplyr::filter(!is.na(ISO3))
 
 # get rid of non-ASCII
 country_data$Country = iconv(country_data$Country, from = 'UTF-8', to = 'ASCII//TRANSLIT')
@@ -147,10 +136,10 @@ country_data$Country[is.na(country_data$Country)] <- country_data$Country2[is.na
 
 # Separate to country name database, country codes, and other details
 
-country_names_df <- country_data %>% select(ISO3, Country, Country2, FIFA, IOC,
-                                         contains("official_name"), 
-                                         contains("UNTERM"), ISO4217.currency_country_name) %>%
-            mutate(UNTERM.Spanish.Short = iconv(UNTERM.Spanish.Short, from = 'UTF-8', to = 'ASCII//TRANSLIT'),
+country_names_df <- country_data %>% dplyr::select(ISO3, Country, Country2, FIFA, IOC,
+                                         tidyselect::contains("official_name"), 
+                                         tidyselect::contains("UNTERM"), ISO4217.currency_country_name) %>%
+            dplyr::mutate(UNTERM.Spanish.Short = iconv(UNTERM.Spanish.Short, from = 'UTF-8', to = 'ASCII//TRANSLIT'),
                    UNTERM.Spanish.Formal = iconv(UNTERM.Spanish.Formal, from = 'UTF-8', to = 'ASCII//TRANSLIT'),
                    UNTERM.French.Formal = iconv(UNTERM.French.Formal, from = 'UTF-8', to = 'ASCII//TRANSLIT'),
                    UNTERM.French.Short = iconv(UNTERM.French.Short, from = 'UTF-8', to = 'ASCII//TRANSLIT'),
@@ -168,16 +157,16 @@ country_names_df$FIFA[country_names_df$FIFA=="" | country_names_df$FIFA==" "] <-
 
 
 # Merge Reference data with names data
-country_names_df <- full_join(country_df %>% select(-ISO2), country_names_df %>% mutate(ISO3=toupper(ISO3)), 
+country_names_df <- dplyr::full_join(country_df %>% dplyr::select(-ISO2), country_names_df %>% dplyr::mutate(ISO3=toupper(ISO3)), 
                               by=c("ISO3"="ISO3")) %>%
-  select(ISO3, Numeric, Name, everything())
+  dplyr::select(ISO3, Numeric, Name, tidyselect::everything())
 country_names_df$ISO3[country_names_df$ISO3=="" | country_names_df$ISO3==" "] <- NA
 
 
 # Check for unmatched duplicates
-dups <- match(tolower((country_names_df %>% filter(is.na(ISO3)))$Country), 
+dups <- match(tolower((country_names_df %>% dplyr::filter(is.na(ISO3)))$Country), 
               tolower(country_names_df$Name))
-dups <- tolower((country_names_df %>% filter(is.na(ISO3)))$name1)[!is.na(dups)]
+dups <- tolower((country_names_df %>% dplyr::filter(is.na(ISO3)))$name1)[!is.na(dups)]
 
 if (length(dups)>0){
   dupped.a <- match(dups, tolower(country_names_df$name1))
@@ -192,15 +181,15 @@ country_names_df$Name[is.na(country_names_df$Name)] <- country_names_df$Country[
 
 
 # Merge with alt_country names
-country_names_df <- full_join(country_names_df, alt_country_names %>% mutate(ISO3=toupper(ISO3)), 
+country_names_df <- full_join(country_names_df, alt_country_names %>% dplyr::mutate(ISO3=toupper(ISO3)), 
                            by=c("ISO3"="ISO3")) %>%
-                  select(ISO3, Numeric, Name, everything())
+                  dplyr::select(ISO3, Numeric, Name, tidyselect::everything())
 country_names_df$ISO3[country_names_df$ISO3=="" | country_names_df$ISO3==" "] <- NA
 
 # Check for unmatched duplicates
-dups <- match(tolower((country_names_df %>% filter(is.na(ISO3)))$name1), 
+dups <- match(tolower((country_names_df %>% dplyr::filter(is.na(ISO3)))$name1), 
       tolower(country_names_df$Name))
-dups <- tolower((country_names_df %>% filter(is.na(ISO3)))$name1)[!is.na(dups)]; print(dups)
+dups <- tolower((country_names_df %>% dplyr::filter(is.na(ISO3)))$name1)[!is.na(dups)]; print(dups)
 if (length(dups)>0){
   dupped.a <- match(dups, tolower(country_names_df$name1))
   dupped.b <- match(dups, tolower(country_names_df$Name))
@@ -214,9 +203,9 @@ country_names_df$Name[is.na(country_names_df$Name)] <- country_names_df$name1[is
 
 
 # Check ISO Level-2 data
-dups <- match(tolower((country_names_df %>% filter(is.na(Numeric)))$Name), 
+dups <- match(tolower((country_names_df %>% dplyr::filter(is.na(Numeric)))$Name), 
               tolower(locations_lvl2$Name))
-dups <- tolower((country_names_df %>% filter(is.na(Numeric)))$Name)[!is.na(dups)]; print(dups)
+dups <- tolower((country_names_df %>% dplyr::filter(is.na(Numeric)))$Name)[!is.na(dups)]; print(dups)
 if (length(dups)>0){
   dupped.a <- match(dups, tolower(country_names_df$Name))
   dupped.b <- match(dups, tolower(locations_lvl2$Name))
@@ -231,7 +220,7 @@ country_names_df$ISO3[is.na(country_names_df$ISO3)] <- country_names_df$Name[is.
 
 # Remove West Bank (already there with palestine)
 country_names_df <- country_names_df[country_names_df$ID!=276,]
-country_names_df <- country_names_df %>% filter(!is.na(ISO3))
+country_names_df <- country_names_df %>% dplyr::filter(!is.na(ISO3))
 row.names(country_names_df) <- country_names_df$ISO3
 
 # # Convert to list for easy manipulation
@@ -241,8 +230,8 @@ row.names(country_names_df) <- country_names_df$ISO3
 
 
 # Convert to long -- easier to search
-country_names <- country_names_df %>% select(-ID, -Numeric, -ISOtrue) %>% gather(key="name_type", value="names", -ISO3, -Name, -ISO_level)
-country_names <- country_names %>% filter(!is.na(names) & names!="" & names!=" ")
+country_names <- country_names_df %>% dplyr::select(-ID, -Numeric, -ISOtrue) %>% tidyr::gather(key="name_type", value="names", -ISO3, -Name, -ISO_level)
+country_names <- country_names %>% dplyr::filter(!is.na(names) & names!="" & names!=" ")
 
 # Add "America" to USA
 country_names <- rbind(country_names, as.vector(c(country_names[which(country_names$ISO3=="USA")[1],1:3], 
@@ -250,11 +239,11 @@ country_names <- rbind(country_names, as.vector(c(country_names[which(country_na
 
 # Get rid of duplicates 
 name_types <- unique(country_names$name_type)
-country_names <- country_names %>% mutate(name_type=factor(name_type, levels=name_types, labels = name_types)) %>%
-                     arrange(ISO3, name_type) %>%
-                     mutate(duplic_name=duplicated(toupper(names)))
-country_names <- country_names %>% filter(duplic_name==FALSE) %>% select(-duplic_name)
-country_iso <- country_names_df %>% select(ISO3, Name)
+country_names <- country_names %>% dplyr::mutate(name_type=factor(name_type, levels=name_types, labels = name_types)) %>%
+                     dplyr::arrange(ISO3, name_type) %>%
+                     dplyr::mutate(duplic_name=duplicated(toupper(names)))
+country_names <- country_names %>% dplyr::filter(duplic_name==FALSE) %>% dplyr::select(-duplic_name)
+country_iso <- country_names_df %>% dplyr::select(ISO3, Name)
 
 # Save names data
 usethis::use_data(country_iso, overwrite = TRUE, compress = 'xz')
@@ -265,15 +254,15 @@ usethis::use_data(country_names, overwrite = TRUE, compress = 'xz')
 
 # COUNTRY CODES -----------------------------------------------------------
 
-country_codes <- country_data %>% select(ISO3, Country, FIFA, IOC, everything())
-country_codes <- country_codes %>% select(-contains("official_name"), 
-                                        -contains("UNTERM"),
+country_codes <- country_data %>% dplyr::select(ISO3, Country, FIFA, IOC, tidyselect::tidyselect::everything())
+country_codes <- country_codes %>% dplyr::select(-tidyselect::contains("official_name"), 
+                                        -tidyselect::contains("UNTERM"),
                                         -Dial, -is_independent,
                                         -Developed...Developing.Countries,
-                                        -contains("ISO4217.currency"),
+                                        -tidyselect::contains("ISO4217.currency"),
                                         -Small.Island.Developing.States..SIDS.,
-                                        -contains("region"),
-                                        -contains("Region"),
+                                        -tidyselect::contains("region"),
+                                        -tidyselect::contains("Region"),
                                         -Country2, -Capital, -Languages,
                                         -Least.Developed.Countries..LDC.,
                                         -Global.Name, -Global.Code,

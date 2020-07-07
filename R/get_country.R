@@ -191,6 +191,92 @@ match_locs_level2 <- function(
 
 
 
+
+#' @name match_locs_level2
+#' @title match_locs_level2
+#' @description use stringdist to get best match for country name, if not official country
+#' @param a location name to match
+#' @param names location names to match against
+#' @param return_Code TRUE/FALSE
+#' @param return_name TRUE/FALSE return standardized name
+#' @param return_score TRUE/FALSE
+#' @param return_score_matrix TRUE/FALSE
+#' @return ISOs, country names, matching scores, full matching distance matrix
+#' @export
+match_locations <- function(
+  a,
+  names,
+  return_name=TRUE,
+  return_score=FALSE,
+  return_score_matrix=FALSE
+){
+  
+  if (is.null(names)){
+    stop("Need to supply vector to 'names_standard' to match against.")
+  }
+  
+  if(length(a) > 1 | length(a) == 0){
+    stop("ERROR: 'a' can only be of length 1")
+  }
+  if(is.na(a)){
+    return(NA)
+  }
+
+  a <- standardize_location_strings(a)
+  b <- standardize_location_strings(names)
+  
+  methods <- c(
+    "osa",
+    "lv",
+    "dl",
+    "lcs",
+    "qgram",
+    "cosine",
+    "jaccard",
+    "jw",
+    "soundex"
+  )
+  dists <- as.data.frame(matrix(NA, nrow = length(b), ncol = length(methods),
+                                dimnames = list(b, methods)))
+  for (j in 1:length(methods)){
+    dists[, j]  <-
+      suppressWarnings(stringdist::stringdist(a, b, method = methods[j]))
+  }
+  dists$score_sums <- rowSums(dists)
+  dists$osa <- as.integer(dists$osa)
+  
+  best_ <- NULL
+  # get best from results
+  if (any(dists$osa <= 1)){
+    best_ <- which.min(dists$score_sums)
+  } else if (any(dists$jw <= .1)){
+    best_ <- which.min(dists$score_sums)
+  } else if (any(dists$osa <= 3 & dists$jw <= 0.31 & dists$soundex == 0)){
+    best_ <- which(dists$osa <= 3 & dists$jw <= 0.31 & dists$soundex == 0)
+  }
+  
+  if (length(best_) == 0 & !return_score_matrix){
+    return(NA)
+  } else if (length(best_) == 0 & return_score_matrix){
+    return(dists)
+  }
+  if (length(best_ > 1)){
+    name <- paste(names[best_], collapse = ", ")
+    score_sum <- paste(dists$score_sums[best_], collapse = ", ")
+  } else {
+    name <- names[best_]
+    score_sum <- dists$score_sums[best_]
+  }
+  
+  res <- data.frame(name = name, score_sum = score_sum)
+  return(res[, c(return_name, return_score)])
+}
+
+
+
+
+
+
 #' @name match_city
 #' @title match_city
 #' @description use stringdist to get best match for city name
@@ -354,41 +440,98 @@ get_country_name_std <- function(country){
 
 
 
-# Get Standardized Name for Location
+#' # Get Standardized Name for Location
+#' #' @name get_location_std
+#' #' @title get_location_std
+#' #' @description get a standardized name for a vector of locations. This will identify most likely matched
+#' #' to the inputted names used a variety of tools and methods. This should be used when the data likely have
+#' #' locations that are not only countries (i.e., some sub-countries like England or Dubai)
+#' #' @param location vector of location names
+#' #' @return vector of names for each location. These can then be used to identify other characteristics of the location
+#' #' @export
+#' get_location_std <- function(location){
+#' 
+#'   location <- standardize_location_strings(location)
+#' 
+#'   # just check the unique countries to speed it up
+#'   location_all <- location
+#'   location <- unique(location)
+#'   location_indexes <- match(location_all, location)
+#' 
+#'   # # First try to match the country using get_iso and get_country_name_std
+#'   loc_stds <- get_country_name_std(location)
+#' 
+#'   # If not completely successful, try using "match_locs_level2" function
+#'   if (sum(is.na(loc_stds)) != 0){
+#'     locs_need_match <- is.na(loc_stds)
+#'     match_attempt2 <- as.character(lapply(
+#'       X = location[locs_need_match],
+#'       FUN = function(X){
+#'         as.character(match_locs_level2(X))
+#'       }
+#'     ))
+#'     # fill in new matches
+#'     loc_stds[locs_need_match] <- match_attempt2
+#'   }
+#'   return(loc_stds[location_indexes])
+#' }
+#' 
+#' ## JK : Turn this into an actual examples block probably
+#' # # Example
+#' # data('test_mixed_names',package='globaltoolboxlite')
+#' # get_iso(country=test_mixed_names)
+
+
+
+
+# Get Standardized Name for inputted set of locations
 #' @name get_location_std
 #' @title get_location_std
 #' @description get a standardized name for a vector of locations. This will identify most likely matched
 #' to the inputted names used a variety of tools and methods. This should be used when the data likely have
 #' locations that are not only countries (i.e., some sub-countries like England or Dubai)
 #' @param location vector of location names
+#' @param ref_locations vector of reference locations to match to. If left NULL, will search location names included in package
 #' @return vector of names for each location. These can then be used to identify other characteristics of the location
 #' @export
-get_location_std <- function(location){
-
-  ## JK : Why is this commented out?
-  ## JK : Seems like a potential place for standardize_location_strings
-  location <- tolower(location)
-
+get_location_std <- function(location, ref_locations=NULL){
+  
+  location <- standardize_location_strings(location)
+  
   # just check the unique countries to speed it up
   location_all <- location
   location <- unique(location)
   location_indexes <- match(location_all, location)
-
-  # # First try to match the country using get_iso and get_country_name_std
-  loc_stds <- get_country_name_std(location)
-
-  # If not completely successful, try using "match_locs_level2" function
-  if (sum(is.na(loc_stds)) != 0){
-    locs_need_match <- is.na(loc_stds)
-    match_attempt2 <- as.character(lapply(
-      X = location[locs_need_match],
-      FUN = function(X){
-        as.character(match_locs_level2(X))
+  
+  # if no reference locations provided, search names included in package
+  if (is.null(ref_locations)){
+    
+    # # First try to match the country using get_iso and get_country_name_std
+    loc_stds <- get_country_name_std(location)
+    
+    # If not completely successful, try using "match_locs_level2" function
+    if (sum(is.na(loc_stds)) != 0){
+      locs_need_match <- is.na(loc_stds)
+      match_attempt2 <- as.character(lapply(
+        X = location[locs_need_match],
+        FUN = function(X){
+          as.character(match_locs_level2(X))
+        }
+      ))
+      # fill in new matches
+      loc_stds[locs_need_match] <- match_attempt2
+    }
+    
+  # If reference locations included, try to match against them
+  } else {
+    loc_stds <- as.character(lapply(
+        X = location,
+        FUN = function(X){
+          as.character(match_locations(a=X, names=ref_locations))
       }
     ))
-    # fill in new matches
-    loc_stds[locs_need_match] <- match_attempt2
   }
+    
   return(loc_stds[location_indexes])
 }
 
@@ -396,6 +539,9 @@ get_location_std <- function(location){
 # # Example
 # data('test_mixed_names',package='globaltoolboxlite')
 # get_iso(country=test_mixed_names)
+
+
+
 
 
 
