@@ -159,12 +159,16 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
     age_grps_full <- paste(age_grps, c(age_grps[-1],100), sep="_")
     
     
-    #load data
-    if (!is.null(shp_country_var)){
-        adm2 <- sf::read_sf(shp) %>%   #admin-2 / district level shapefile
-            dplyr::filter(!!as.name(shp_country_var)==country)
-    } else {
+    #load data (if character string, load it, otherwise just rename shapefile)
+    if (is.character(shp)){
         adm2 <- sf::read_sf(shp) 
+    } else {
+        adm2 <- shp
+    }
+    
+    if (!is.null(shp_country_var)){
+        adm2 <- adm2 %>%   #admin-2 / district level shapefile
+            dplyr::filter(!!as.name(shp_country_var)==country)
     }
         
     doParallel::registerDoParallel(cores)
