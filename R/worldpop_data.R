@@ -101,6 +101,7 @@ wp_geotiff_filenames <- function(country="BGD", year="2020") {
 ##' 
 download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_data", cores=4){
     
+    country <- toupper(country)
     dir.create(file.path(save_dir, country), recursive = TRUE, showWarnings = FALSE)
     
     url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country, "/")
@@ -153,6 +154,7 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
 load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_data", cores=4, loc_var=NA,
                               add_pop_to_shapefile = TRUE, shp_country_var=NULL) {
     
+    country <- toupper(country)
     filenames <- wp_geotiff_filenames(country, year)
     
     age_grps <- sort(unique(as.integer(data.frame(matrix(unlist(strsplit(filenames, "_")), ncol=4, byrow=TRUE), stringsAsFactors = FALSE)[,3])))
@@ -280,6 +282,60 @@ convert_wp_10yr <- function(age_pop_data){
     return(age_pop_10yr)
     
 }
+
+
+
+##' Function to transform population data from a worldpop age groups to user-defined age groups
+##' 
+##' @param age_pop_data data pulled from worldpop using `load_worldpop_age`
+##' @param age_groups lower age limit of user-defined age groups. For 5 year age groups, this would be 0, 5, 10, etc.
+##' @param max_age max age to include (default is 100)
+##'
+##' @return long age population data by admin level 2, in user-defined age groups
+##'
+##' @import dplyr
+##' @importFrom tibble as_tibble
+##' 
+##' @references WorldPop (https://www.worldpop.org/geodata)
+##'
+##' @export
+##' 
+convert_wp_agegroups <- function(age_pop_data, age_groups = seq(0, 80, 5), max_age=100){
+    
+    age_groups_l <- age_groups # left limit
+    age_groups_r <- c(age_groups[-1], max_age) #right limit (not inclusive)
+    age_groups <- paste0(age_groups_l, "_", age_groups_r)
+    
+    smooth_fun <- function(x, y, age_groups_r) {
+        diff(c(0, as.integer(unlist(predict(smooth.spline(x, y, all.knots = TRUE), data.frame(x=age_groups_r))$y))))
+    }
+    
+    age_pop_data <- age_pop_data %>% 
+        dplyr::mutate(age_l = as.numeric(age_l),
+                      age_r = as.numeric(age_r),
+                      pop = as.numeric(pop),
+                      pop_f = as.numeric(pop_f),
+                      pop_m = as.numeric(pop_m)) %>%
+        dplyr::arrange(age_l) %>%
+        dplyr::mutate(pop_cum = cumsum(pop),
+                      pop_f_cum = cumsum(pop_f),
+                      pop_m_cum = cumsum(pop_m))
+    
+    age_pop_fit <- age_pop_data %>% 
+        nest(data = c(age, age_l, age_r, pop_f, pop_m, pop, pop_cum, pop_f_cum, pop_m_cum)) %>%
+        mutate(age_groups = list(age_groups),
+               age_l = list(age_groups_l),
+               age_r = list(age_groups_r),
+               pop = purrr::map(data, ~smooth_fun(x=.$age_r, y=.$pop_cum, age_groups_r)),
+               pop_f = purrr::map(data, ~smooth_fun(x=.$age_r, y=.$pop_f_cum, age_groups_r)),
+               pop_m = purrr::map(data, ~smooth_fun(x=.$age_r, y=.$pop_m_cum, age_groups_r))) %>% 
+        unnest(c(age_groups, age_l, age_r, pop, pop_f, pop_m)) %>%
+        tibble::as_tibble() %>%
+        dplyr::select(-data)
+    
+    return(age_pop_fit)
+}
+
 
 
 
