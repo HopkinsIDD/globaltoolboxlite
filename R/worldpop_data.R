@@ -122,6 +122,30 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
 }
 
 
+## to be finished
+download_worldpop_globalmosaics <- function(country="BGD", year="2020", save_dir="raw_data", cores=4){
+    
+    country <- toupper(country)
+    dir.create(file.path(save_dir, country), recursive = TRUE, showWarnings = FALSE)
+    
+    url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country, "/")
+    filenames <- wp_geotiff_filenames(country, year)
+    
+    
+    doParallel::registerDoParallel(cores)
+    foreach(f=seq_len(length(filenames))) %dopar% {
+        url1 <- file.path(url, filenames[f])
+        download.file(url1, destfile = file.path(save_dir, country, filenames[f]), mode="wb")
+    }
+    doParallel::stopImplicitCluster()
+    
+    print(paste0("Successfully downloaded age population files from Worldpop and save to ", save_dir,"/",country))
+    
+    return(filenames)
+    
+}
+
+
 
 
 
@@ -151,8 +175,10 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
 ##'
 ##' @export
 ##' 
-load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_data", cores=4, loc_var=NA,
-                              add_pop_to_shapefile = TRUE, shp_country_var=NULL) {
+load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_data", cores=4, 
+                              loc_var="NAME_2",
+                              shp_vars = c("GID_0", "NAME_0", "GID_1", "NAME_1", "GID_2", "NAME_2"),
+                              add_pop_to_shapefile = TRUE, shp_country_var="GID_0") {
     
     country <- toupper(country)
     filenames <- wp_geotiff_filenames(country, year)
@@ -172,7 +198,7 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
         adm2 <- adm2 %>%   #admin-2 / district level shapefile
             dplyr::filter(!!as.name(shp_country_var)==country)
     }
-        
+    
     doParallel::registerDoParallel(cores)
     age_pop_data <- foreach(f=seq_len(length(filenames)), .combine=rbind,
                             .packages = c("dplyr", "tibble", 
@@ -201,8 +227,8 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
                                                   dplyr::rename(pop = sum) %>% 
                                                   dplyr::select(-geometry)
                                               
-                                              if (!is.na(loc_var)) {
-                                                  loc_values <- loc_values %>% dplyr::select(tidyselect::all_of(loc_var), sex, age, pop)
+                                              if (!is.na(shp_vars[1])) {
+                                                  loc_values <- loc_values %>% dplyr::select(tidyselect::all_of(shp_vars), sex, age, pop)
                                               }
                                               
                                               loc_values <- loc_values %>%
@@ -224,9 +250,9 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
         dplyr::mutate(pop_m = as.integer(pop_m), pop_f = as.integer(pop_f)) %>%
         dplyr::mutate(pop = pop_m + pop_f) %>%
         dplyr::select(-row)
-
+    
     age_pop_tot <- age_pop_data %>%
-        dplyr::group_by(loc) %>%
+        dplyr::group_by(dplyr::across(tidyselect::all_of(unique(shp_vars[shp_vars!=loc_var]))),loc) %>%
         dplyr::summarise(pop = sum(pop)) %>%
         tibble::as_tibble() %>%
         dplyr::rename(setNames("loc", loc_var))
@@ -237,7 +263,7 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
         if (!is.null(shp_country_var)){
             print("Not adding population to shapefile due to subsetting of shapefile")
         } else {
-        
+            
             adm2 <- adm2 %>% left_join(age_pop_tot, 
                                        by=c(loc_var))
             
