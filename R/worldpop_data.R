@@ -264,8 +264,7 @@ load_worldpop_age <- function(shp, country="BGD", year="2020", save_dir="raw_dat
             print("Not adding population to shapefile due to subsetting of shapefile")
         } else {
             
-            adm2 <- adm2 %>% left_join(age_pop_tot, 
-                                       by=c(loc_var))
+            adm2 <- adm2 %>% left_join(age_pop_tot)
             
             # Save it back in the same name
             sf::st_write(adm2, shp, delete_layer=TRUE)
