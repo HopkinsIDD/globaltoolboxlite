@@ -331,8 +331,19 @@ convert_wp_agegroups <- function(age_pop_data, age_groups = seq(0, 80, 5), max_a
     age_groups_r <- c(age_groups[-1]-1, max_age) #right limit (not inclusive)
     age_groups <- paste0(age_groups_l, "_", age_groups_r)
     
+    # Old function
+    # smooth_fun <- function(x, y, age_groups_r) {
+    #     x <- c(x, max(x)+5)
+    #     y <- c(y, max(y))
+    #     diff(c(0, as.integer(unlist(predict(smooth.spline(x, y, all.knots = TRUE), data.frame(x=age_groups_r))$y))))
+    # }
+    
+    # New function(monotonic)
     smooth_fun <- function(x, y, age_groups_r) {
-        diff(c(0, as.integer(unlist(predict(smooth.spline(x, y, all.knots = TRUE), data.frame(x=age_groups_r))$y))))
+        x <- c(x, max(x)+5)
+        y <- c(y, max(y))
+        splinefit_ <- splinefun(x, y, method="hyman")
+        diff(c(0, as.integer(splinefit_(age_groups_r))))
     }
     
     
