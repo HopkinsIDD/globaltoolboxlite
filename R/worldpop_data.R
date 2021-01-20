@@ -104,7 +104,7 @@ download_worldpop_agetifs <- function(country="BGD", year="2020", save_dir="raw_
     country <- toupper(country)
     dir.create(file.path(save_dir, country), recursive = TRUE, showWarnings = FALSE)
     
-    url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country, "/")
+    url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country)
     filenames <- wp_geotiff_filenames(country, year)
         
     
