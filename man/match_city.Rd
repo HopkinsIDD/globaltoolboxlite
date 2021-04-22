@@ -22,8 +22,6 @@ match_city(
 \item{return_score}{TRUE/FALSE}
 
 \item{return_score_matrix}{TRUE/FALSE}
-
-\item{names}{city df loaded with the package}
 }
 \value{
 ISOs, city names, matching scores, full matching distance matrix

@@ -20,8 +20,6 @@ download_worldpop_agetifs(
 \item{save_dir}{directory where to save geotiff files}
 
 \item{cores}{number of cores to parallelize over}
-
-\item{shp}{Shapefile file path for shapefile of geunits (i.e., admin2)}
 }
 \value{
 file names of the geotiffs downloaded and saved.

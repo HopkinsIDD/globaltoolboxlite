@@ -9,27 +9,32 @@ Depends:
     R (>= 3.4)
 Imports: 
     countrycode,
+    doParallel,
     dplyr,
-    stringdist,
-    stringr,
+    exactextractr,
+    foreach,
     glue,
     lubridate,
-    tibble,
-    tidyr,
-    reshape2,
-    stats,  
-    rlang  
-Suggests: 
-    readxl,
-    testthat,
-    covr,
-    httr,
-    exactextractr,
     RCurl,
     raster,
+    reshape2,  
+    rlang,
     sf,
-    doParallel,
-    foreach
+    stringdist,
+    stringi,
+    stringr,
+    tibble,
+    tidyr,
+    stats  
+Suggests: 
+    covr,
+    fuzzr,
+    globaltoolbox,
+    httr,
+    readxl,
+    testthat
+Remotes:
+    github::HopkinsIDD/globaltoolbox
 License: GPL (>=2)
 Encoding: UTF-8
 LazyData: true

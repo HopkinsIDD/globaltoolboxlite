@@ -11,11 +11,12 @@
 #' @param return_score TRUE/FALSE
 #' @param return_score_matrix TRUE/FALSE
 #' @return ISOs, country names, matching scores, full matching distance matrix
-#' @importFrom stringdist stringdist
 #' @export
 match_country <- function(a, #country_names=country_names,
-                               return_ISO=TRUE, return_country_name=FALSE,
-                               return_score=FALSE, return_score_matrix=FALSE){
+                          return_ISO=TRUE,
+                          return_country_name=FALSE,
+                          return_score=FALSE,
+                          return_score_matrix=FALSE){
 
   if(length(a) > 1 | length(a) == 0){
     stop("ERROR: 'a' can only be of length 1")
@@ -26,8 +27,8 @@ match_country <- function(a, #country_names=country_names,
 
   # Load needed data
   data('country_names', package = 'globaltoolboxlite')
-  
-  
+
+
   a <- tolower(a)
   a <- stringr::str_replace_all(a, "[[:punct:]]", "") # remove all punctuation
   b <- tolower(country_names$names)
@@ -104,28 +105,26 @@ match_country <- function(a, #country_names=country_names,
 #' @param a location name to match
 #' @param names locations_lvl2 df loaded with the package
 #' @param return_ISO3 TRUE/FALSE
-#' @param return_Code TRUE/FALSE
 #' @param return_name TRUE/FALSE return standardized name
+#' @param return_Code TRUE/FALSE
 #' @param return_score TRUE/FALSE
 #' @param return_score_matrix TRUE/FALSE
 #' @return ISOs, country names, matching scores, full matching distance matrix
 #' @export
-match_locs_level2 <- function(
-  a,
-  names = NULL,
-  return_ISO3=FALSE,
-  return_name=TRUE,
-  return_Code=FALSE,
-  return_score=FALSE,
-  return_score_matrix=FALSE
-){
+match_locs_level2 <- function(a,
+                              names = NULL,
+                              return_ISO3=FALSE,
+                              return_name=TRUE,
+                              return_Code=FALSE,
+                              return_score=FALSE,
+                              return_score_matrix=FALSE) {
 
-  
+
   if (is.null(names)){
     data('locations_lvl2', package = 'globaltoolboxlite')
     names <- locations_lvl2
   }
-  
+
   if(length(a) > 1 | length(a) == 0){
     stop("ERROR: 'a' can only be of length 1")
   }
@@ -195,22 +194,17 @@ match_locs_level2 <- function(
 #' @title match_city
 #' @description use stringdist to get best match for city name
 #' @param a location name to match
-#' @param names city df loaded with the package
 #' @param return_ISO3 TRUE/FALSE
 #' @param return_name TRUE/FALSE return standardized name
 #' @param return_score TRUE/FALSE
 #' @param return_score_matrix TRUE/FALSE
 #' @return ISOs, city names, matching scores, full matching distance matrix
-#' @importFrom stringdist stringdist
-#' @importFrom stringr str_replace_all
 #' @export
-match_city <- function(
-  a,
-  return_ISO3=FALSE,
-  return_name=TRUE,
-  return_score=FALSE,
-  return_score_matrix=FALSE
-){
+match_city <- function(a,
+                       return_ISO3=FALSE,
+                       return_name=TRUE,
+                       return_score=FALSE,
+                       return_score_matrix=FALSE){
   if(length(a) > 1 | length(a) == 0){
     stop("ERROR: 'a' can only be of length 1")
   }
@@ -220,8 +214,8 @@ match_city <- function(
 
   # load the data
   data('city_data', package = 'globaltoolboxlite')
-  
-  
+
+
   a <- tolower(a)
   a <- stringr::str_replace_all(a, "[[:punct:]]", "") # remove all punctuation
   b <- tolower(city_data$city_ascii)
@@ -293,7 +287,6 @@ match_city <- function(
 #' to the inputted country names used a variety of tools and methods.
 #' @param country vector of country names
 #' @return vector of ISOs for each country. These can then be used to identify other characteristics of the country
-#' @importFrom countrycode countrycode
 #' @export
 get_iso <- function(country){
 
@@ -563,29 +556,26 @@ get_UNcode_from_ISO3 <- function(ISO3){
 #'                 "ITU", "DS", "M49", "Continent", "TLD", "Geoname.ID", "EDGAR")
 #' @return vector of codes matching each country
 #' @export
-get_country_code <- function(
-  country,
-  code=c(
-    "FIFA",
-    "IOC",
-    "ISO2",
-    "UNcode",
-    "MARC",
-    "GAUL",
-    "FIPS",
-    "WMO",
-    "ITU",
-    "DS",
-    "M49",
-    "Continent",
-    "TLD",
-    "Geoname.ID",
-    "EDGAR"
-  )
-){
+get_country_code <- function(country,
+                             code=c(
+                               "FIFA",
+                               "IOC",
+                               "ISO2",
+                               "UNcode",
+                               "MARC",
+                               "GAUL",
+                               "FIPS",
+                               "WMO",
+                               "ITU",
+                               "DS",
+                               "M49",
+                               "Continent",
+                               "TLD",
+                               "Geoname.ID",
+                               "EDGAR")){
   iso3 <- get_iso(country)
   data('country_codes', package = 'globaltoolboxlite')
-  
+
   # Get code using ISO3
   code_columns <- match(toupper(code), toupper(colnames(country_codes)))
   return(as.character(
