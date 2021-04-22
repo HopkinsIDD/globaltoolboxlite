@@ -2,8 +2,8 @@ Package: globaltoolboxlite
 Title: Identify Location Names and Link with Other Data, lite version
 Version: 0.0.0.9000
 Authors@R: c(
-  person("Shaun", "Truelove", email = "shauntruelove@jhu.edu", role = c("aut")),
-  person("Joshua", "Kaminsky", email = "jkaminsky@jhu.edu", role = c("aut", "cre")))
+  person("Shaun", "Truelove", email = "shauntruelove@jhu.edu", role = c("aut", "cre")),
+  person("Joshua", "Kaminsky", email = "jkaminsky@jhu.edu", role = c("ctb")))
 Description: Allows users to standardize location names.
 Depends: 
     R (>= 3.4)

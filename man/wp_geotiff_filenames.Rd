@@ -5,11 +5,9 @@
 \title{Function to get population data from a worldpop geotiff and geounit shapefile
 This function extracts raster values for overlayed polygons}
 \usage{
-wp_geotiff_filenames(shp, country = "BGD", year = "2020")
+wp_geotiff_filenames(country = "BGD", year = "2020")
 }
 \arguments{
-\item{shp}{Shapefile file path for shapefile of geunits (i.e., admin2)}
-
 \item{country}{ISO3 of country of interest}
 
 \item{year}{Year of population data (2000 to 2020)}

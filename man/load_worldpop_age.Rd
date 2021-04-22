@@ -11,11 +11,14 @@ load_worldpop_age(
   year = "2020",
   save_dir = "raw_data",
   cores = 4,
-  loc_var = NA
+  loc_var = "NAME_2",
+  shp_vars = c("GID_0", "NAME_0", "GID_1", "NAME_1", "GID_2", "NAME_2"),
+  add_pop_to_shapefile = TRUE,
+  shp_country_var = "GID_0"
 )
 }
 \arguments{
-\item{shp}{Shapefile file path for shapefile of geunits (i.e., admin2)}
+\item{shp}{Shapefile file path for shapefile of geounits (i.e., admin2)}
 
 \item{country}{ISO3 of country of interest}
 
@@ -26,6 +29,10 @@ load_worldpop_age(
 \item{cores}{number of cores to parallelize over}
 
 \item{loc_var}{name of location name or id variable, if want to reduce data to this and population data}
+
+\item{add_pop_to_shapefile}{logical, whether to add total population to the shapefile}
+
+\item{shp_country_var}{Variable in the shapefile denoting the country ISO3 code. For GADM shapefiles, this is GID_0. If NULL, no subsetting done}
 }
 \value{
 long age population data by admin level 2

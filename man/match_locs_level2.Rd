@@ -2,6 +2,7 @@
 % Please edit documentation in R/get_country.R
 \name{match_locs_level2}
 \alias{match_locs_level2}
+\alias{match_locations}
 \title{match_locs_level2}
 \usage{
 match_locs_level2(
@@ -13,11 +14,19 @@ match_locs_level2(
   return_score = FALSE,
   return_score_matrix = FALSE
 )
+
+match_locations(
+  a,
+  names,
+  return_name = TRUE,
+  return_score = FALSE,
+  return_score_matrix = FALSE
+)
 }
 \arguments{
 \item{a}{location name to match}
 
-\item{names}{locations_lvl2 df loaded with the package}
+\item{names}{location names to match against}
 
 \item{return_ISO3}{TRUE/FALSE}
 
@@ -31,7 +40,11 @@ match_locs_level2(
 }
 \value{
 ISOs, country names, matching scores, full matching distance matrix
+
+ISOs, country names, matching scores, full matching distance matrix
 }
 \description{
+use stringdist to get best match for country name, if not official country
+
 use stringdist to get best match for country name, if not official country
 }

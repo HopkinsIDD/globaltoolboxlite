@@ -1,15 +1,15 @@
 ##' Source code to build Country-based data source
 
 
-# Install and load needed packages
-if(!require('dplyr')) install.packages('dplyr'); library(dplyr)
-if(!require('readr')) install.packages('readr'); library(readr)
-if(!require('tidyr')) install.packages('tidyr'); library(tidyr)
-
-# if(!require('RCurl')) install.packages('RCurl'); library(RCurl)
-# if(!require('tibble')) install.packages('tibble'); library(tibble)
-# if(!require('curl')) install.packages('curl'); library(curl)
-
+# # Install and load needed packages
+# if(!require('dplyr')) install.packages('dplyr'); library(dplyr)
+# if(!require('readr')) install.packages('readr'); library(readr)
+# if(!require('tidyr')) install.packages('tidyr'); library(tidyr)
+# 
+# # if(!require('RCurl')) install.packages('RCurl'); library(RCurl)
+# # if(!require('tibble')) install.packages('tibble'); library(tibble)
+# # if(!require('curl')) install.packages('curl'); library(curl)
+# 
 
 
 
@@ -83,7 +83,7 @@ usethis::use_data(location_db, overwrite = TRUE, compress = 'xz')
 alias_data <- country_df %>% select(ISO3, Name, Official_name) %>% 
   tidyr::gather(key="alias_type", value="alias", -ISO3) %>%
   mutate(type="country") %>%
-  filter(!is.na(alias))
+  dplyr::filter(!is.na(alias))
 
 
 
@@ -188,7 +188,7 @@ country_df <- country_df %>% select(-Common_name)
 alias_data <- country_df %>% select(ISO3, Name, Official_name) %>% 
   tidyr::gather(key="alias_type", value="alias", -ISO3) %>%
   mutate(type="country") %>%
-  filter(!is.na(alias))
+  dplyr::filter(!is.na(alias))
 
 
 
@@ -210,7 +210,7 @@ country_data <- country_data %>% select(ISO3=ISO3166.1.Alpha.3,
                                     Country=official_name_en,
                                     Country2=CLDR.display.name,
                                     UNcode=ISO3166.1.numeric, everything()) %>%
-                                  filter(!is.na(ISO3))
+                                  dplyr::filter(!is.na(ISO3))
 
 # get rid of non-ASCII
 country_data$Country = iconv(country_data$Country, from = 'UTF-8', to = 'ASCII//TRANSLIT')
@@ -267,9 +267,9 @@ country_names_df$ISO3[country_names_df$ISO3=="" | country_names_df$ISO3==" "] <-
 
 
 # Check for unmatched duplicates
-dups <- match(tolower((country_names_df %>% filter(is.na(ISO3)))$Country), 
+dups <- match(tolower((country_names_df %>% dplyr::filter(is.na(ISO3)))$Country), 
               tolower(country_names_df$Name))
-dups <- tolower((country_names_df %>% filter(is.na(ISO3)))$name1)[!is.na(dups)]
+dups <- tolower((country_names_df %>% dplyr::filter(is.na(ISO3)))$name1)[!is.na(dups)]
 
 if (length(dups)>0){
   dupped.a <- match(dups, tolower(country_names_df$name1))
@@ -290,9 +290,9 @@ country_names_df <- full_join(country_names_df, alt_country_names %>% mutate(ISO
 country_names_df$ISO3[country_names_df$ISO3=="" | country_names_df$ISO3==" "] <- NA
 
 # Check for unmatched duplicates
-dups <- match(tolower((country_names_df %>% filter(is.na(ISO3)))$name1), 
+dups <- match(tolower((country_names_df %>% dplyr::filter(is.na(ISO3)))$name1), 
       tolower(country_names_df$Name))
-dups <- tolower((country_names_df %>% filter(is.na(ISO3)))$name1)[!is.na(dups)]; print(dups)
+dups <- tolower((country_names_df %>% dplyr::filter(is.na(ISO3)))$name1)[!is.na(dups)]; print(dups)
 if (length(dups)>0){
   dupped.a <- match(dups, tolower(country_names_df$name1))
   dupped.b <- match(dups, tolower(country_names_df$Name))
@@ -306,9 +306,9 @@ country_names_df$Name[is.na(country_names_df$Name)] <- country_names_df$name1[is
 
 
 # Check ISO Level-2 data
-dups <- match(tolower((country_names_df %>% filter(is.na(Numeric)))$Name), 
+dups <- match(tolower((country_names_df %>% dplyr::filter(is.na(Numeric)))$Name), 
               tolower(locations_lvl2$Name))
-dups <- tolower((country_names_df %>% filter(is.na(Numeric)))$Name)[!is.na(dups)]; print(dups)
+dups <- tolower((country_names_df %>% dplyr::filter(is.na(Numeric)))$Name)[!is.na(dups)]; print(dups)
 if (length(dups)>0){
   dupped.a <- match(dups, tolower(country_names_df$Name))
   dupped.b <- match(dups, tolower(locations_lvl2$Name))
@@ -323,7 +323,7 @@ country_names_df$ISO3[is.na(country_names_df$ISO3)] <- country_names_df$Name[is.
 
 # Remove West Bank (already there with palestine)
 country_names_df <- country_names_df[country_names_df$ID!=276,]
-country_names_df <- country_names_df %>% filter(!is.na(ISO3))
+country_names_df <- country_names_df %>% dplyr::filter(!is.na(ISO3))
 row.names(country_names_df) <- country_names_df$ISO3
 
 # # Convert to list for easy manipulation
@@ -334,7 +334,7 @@ row.names(country_names_df) <- country_names_df$ISO3
 
 # Convert to long -- easier to search
 country_names <- country_names_df %>% select(-ID, -Numeric, -ISOtrue) %>% gather(key="name_type", value="names", -ISO3, -Name, -ISO_level)
-country_names <- country_names %>% filter(!is.na(names) & names!="" & names!=" ")
+country_names <- country_names %>% dplyr::filter(!is.na(names) & names!="" & names!=" ")
 
 # Add "America" to USA
 country_names <- rbind(country_names, as.vector(c(country_names[which(country_names$ISO3=="USA")[1],1:3], 
@@ -345,7 +345,7 @@ name_types <- unique(country_names$name_type)
 country_names <- country_names %>% mutate(name_type=factor(name_type, levels=name_types, labels = name_types)) %>%
                      arrange(ISO3, name_type) %>%
                      mutate(duplic_name=duplicated(toupper(names)))
-country_names <- country_names %>% filter(duplic_name==FALSE) %>% select(-duplic_name)
+country_names <- country_names %>% dplyr::filter(duplic_name==FALSE) %>% select(-duplic_name)
 country_iso <- country_names_df %>% select(ISO3, Name)
 
 # Save names data
