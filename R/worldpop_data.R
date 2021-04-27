@@ -79,10 +79,11 @@ wp_geotiff_filenames <- function(country="BGD",
 ##' Function to get population data from a worldpop geotiff and geounit shapefile
 ##' This function extracts raster values for overlayed polygons
 ##'
-##' @param country ISO3 of country of interest
-##' @param year Year of population data (2000 to 2020)
-##' @param save_dir directory where to save geotiff files
-##' @param cores number of cores to parallelize over
+##' @param country ISO3 of country of interest. The default is \code{"BGD"} (Bangladesh).
+##' @param year Year of population data (2000 to 2020). The default is 2020.
+##' @param save_dir directory where to save geotiff files. The default is \code{"raw_data"}. If the directory name does not exist, it will be created automatically.
+##' @param cores number of cores to parallelize over. The default is 4.
+##' @param overwrite logical, if the files to download exist in \code{save_dir} should they be overwritten? The default is \code{FALSE}.
 ##'
 ##' @return file names of the geotiffs downloaded and saved.
 ##'
@@ -96,14 +97,21 @@ wp_geotiff_filenames <- function(country="BGD",
 download_worldpop_agetifs <- function(country="BGD",
                                       year="2020",
                                       save_dir="raw_data",
-                                      cores=4){
-
+                                      cores=4,
+                                      overwrite=FALSE){
+    ## country name must be uppercase
     country <- toupper(country)
+    ## create the directory if doesn't already exist
     dir.create(file.path(save_dir, country), recursive = TRUE, showWarnings = FALSE)
-
+    ## make the URL to pull data from
     url <- paste0("ftp://ftp.worldpop.org.uk/GIS/AgeSex_structures/Global_2000_2020/", year, "/", country)
+    ## get the filenames
     filenames <- wp_geotiff_filenames(country, year)
-
+    ## if overwrite=FALSE, remove filenames that are in save_dir
+    if(!overwrite){
+        save_dir_files <- list.files(file.path(save_dir, country))
+        filenames <- filenames[which(!filenames %in% save_dir_files)]
+    }
 
     doParallel::registerDoParallel(cores)
     foreach(f=seq_len(length(filenames))) %dopar% {

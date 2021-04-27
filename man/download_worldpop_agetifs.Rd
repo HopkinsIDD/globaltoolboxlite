@@ -9,17 +9,20 @@ download_worldpop_agetifs(
   country = "BGD",
   year = "2020",
   save_dir = "raw_data",
-  cores = 4
+  cores = 4,
+  overwrite = FALSE
 )
 }
 \arguments{
-\item{country}{ISO3 of country of interest}
+\item{country}{ISO3 of country of interest. The default is \code{"BGD"} (Bangladesh).}
 
-\item{year}{Year of population data (2000 to 2020)}
+\item{year}{Year of population data (2000 to 2020). The default is 2020.}
 
-\item{save_dir}{directory where to save geotiff files}
+\item{save_dir}{directory where to save geotiff files. The default is \code{"raw_data"}. If the directory name does not exist, it will be created automatically.}
 
-\item{cores}{number of cores to parallelize over}
+\item{cores}{number of cores to parallelize over. The default is 4.}
+
+\item{overwrite}{logical, if the files to download exist in \code{save_dir} should they be overwritten? The default is \code{FALSE}.}
 }
 \value{
 file names of the geotiffs downloaded and saved.
