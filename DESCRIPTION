@@ -16,10 +16,7 @@ Imports:
     glue,
     lubridate,
     RCurl,
-    raster,
-    reshape2,  
     rlang,
-    sf,
     stringdist,
     stringi,
     stringr,
@@ -27,6 +24,8 @@ Imports:
     tidyr,
     stats  
 Suggests: 
+    sf,
+    raster,
     covr,
     fuzzr,
     globaltoolbox,
